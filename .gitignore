@@ -1,0 +1,21 @@
+# Ignore database files
+# *.sqlite3
+
+# Ignore static files directory (you might want to include this if you're using a CDN)
+/static/
+
+# Ignore media files directory
+/media/
+
+# Ignore environment-specific settings
+.env
+
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+
+# Ignore local development settings file
+/local_settings.py
+
+# Ignore virtual environment
+djenv
