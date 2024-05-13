@@ -230,9 +230,9 @@ def borrow(request, book_id):
 
         # Extract user_id, borrow date, and return date from the request body
         data = json.loads(request.body)
-        user_id = data.get("user_id")
-        borrow_date = data.get("borrow_date")
-        return_date = data.get("return_date")
+        user_id = data.get("userId")
+        borrow_date = data.get("borrowDate")
+        return_date = data.get("returnDate")
 
         try:
             # Get the user object based on the provided user_id
