@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from authentication.models import CustomUser
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -12,12 +13,16 @@ def login_user(request):
         email = data.get("email")
         password = data.get("password")
 
-        if not CustomUser.objects.filter(email=email).exists():
+        user = CustomUser.objects.filter(email=email).exists()
+        if not user:
             return JsonResponse({"error": "Invalid Email"}, status=400)
 
-        user = authenticate(email=email, password=password)
+        authUser = authenticate(email=email, password=password)
 
-        if user is None:
+        request.session["role"] = user.role
+        request.session["email"] = email
+
+        if authUser is None:
             return JsonResponse({"error": "Invalid Password"}, status=400)
         else:
             login(request, user)
@@ -62,8 +67,11 @@ def register_user(request):
         user.save()
 
         # Authenticate user after registration
-        user = authenticate(request, username=email, password=password)
-        if user is not None:
+        authUser = authenticate(email=email, password=password)
+        request.session["role"] = role
+        request.session["email"] = email
+
+        if authUser is not None:
             login(request, user)
             return JsonResponse({"message": "Account created Successfully"}, status=201)
         else:
@@ -92,6 +100,8 @@ def edit_user(request):
             if new_password:
                 user.password = make_password(new_password)
             user.save()
+            request.session["role"] = role
+            request.session["email"] = email
             return JsonResponse({"message": "User updated successfully"}, status=200)
         except CustomUser.DoesNotExist:
             return JsonResponse({"error": "User not found"}, status=404)
@@ -103,19 +113,27 @@ def edit_user(request):
 def logout_user(request):
     if request.method == "POST":
         logout(request)
+        request.session.flush()
         return JsonResponse({"message": "Logout Successful"}, status=200)
 
     return JsonResponse({"error": "Method Not Allowed"}, status=405)
 
 
+# @login_required
 @csrf_exempt
-@login_required
 def get_user_profile(request):
-    user = request.user
-    data = {
-        "email": user.email,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "role": user.role,
-    }
-    return JsonResponse(data)
+    print(request.user)
+    if request.session:
+        email = request.session.get("email")
+        print(email)
+        user = CustomUser.objects.filter(email=email)
+        print(user)
+        data = {
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": user.role,
+        }
+        return JsonResponse(data)
+    else:
+        return JsonResponse({"error": "User is not authenticated"}, status=401)
