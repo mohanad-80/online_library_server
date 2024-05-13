@@ -13,20 +13,20 @@ def login_user(request):
         email = data.get("email")
         password = data.get("password")
 
-        user = CustomUser.objects.filter(email=email).exists()
-        if not user:
-            return JsonResponse({"error": "Invalid Email"}, status=400)
+        try:
+            user = CustomUser.objects.get(email=email)
 
-        authUser = authenticate(email=email, password=password)
+            # Check if the password matches
+            if user.check_password(password):
+                # If the password is correct, return a success response
+                return JsonResponse({"user_id": user.id, "role": user.role}, status=200)
+            else:
+                # If the password is incorrect, return an error response
+                return JsonResponse({"error": "Invalid Password"}, status=400)
 
-        request.session["role"] = user.role
-        request.session["email"] = email
-
-        if authUser is None:
-            return JsonResponse({"error": "Invalid Password"}, status=400)
-        else:
-            login(request, user)
-            return JsonResponse({"message": "Login Successful"}, status=200)
+        except CustomUser.DoesNotExist:
+            # If the user with the provided email does not exist, return an error response
+            return JsonResponse({"error": "User not found"}, status=404)
 
     return JsonResponse({"error": "Method Not Allowed"}, status=405)
 
@@ -44,38 +44,15 @@ def register_user(request):
         if CustomUser.objects.filter(email=email).exists():
             return JsonResponse({"error": "Email already taken"}, status=400)
 
-        # user = CustomUser.objects.create_user(
-        #     first_name=first_name,
-        #     last_name=last_name,
-        #     email=email,
-        #     username=email,  # Set email as username
-        #     role=role,
-        # )
-
-        # user.set_password(password)
-        # user.save()
-
-        # Create a new CustomUser object
         user = CustomUser.objects.create_user(email=email, role=role, password=password)
 
-        # Set additional fields
         user.first_name = first_name
         user.last_name = last_name
-        user.username = email  # Set email as username
 
-        # Save the user object
         user.save()
 
-        # Authenticate user after registration
-        authUser = authenticate(email=email, password=password)
-        request.session["role"] = role
-        request.session["email"] = email
-
-        if authUser is not None:
-            login(request, user)
-            return JsonResponse({"message": "Account created Successfully"}, status=201)
-        else:
-            return JsonResponse({"error": "Authentication failed"}, status=400)
+        # Return the user ID in the response
+        return JsonResponse({"user_id": user.id}, status=201)
 
     return JsonResponse({"error": "Method Not Allowed"}, status=405)
 
@@ -84,15 +61,19 @@ def register_user(request):
 def edit_user(request):
     if request.method == "POST":
         data = json.loads(request.body)
-        # user_id = data.get("user_id")
+        user_id = data.get("userId")
         first_name = data.get("fName")
         last_name = data.get("lName")
         email = data.get("email")
         role = data.get("role")
-        new_password = data.get("new_password")
+        current_password = data.get("currentPassword")
+        new_password = data.get("newPassword")
 
         try:
-            user = CustomUser.objects.get(email=email)
+            user = CustomUser.objects.get(id=user_id)
+            if not user.check_password(current_password):
+                return JsonResponse({"error": "Incorrect password"}, status=400)
+
             user.first_name = first_name
             user.last_name = last_name
             user.email = email
@@ -100,8 +81,6 @@ def edit_user(request):
             if new_password:
                 user.password = make_password(new_password)
             user.save()
-            request.session["role"] = role
-            request.session["email"] = email
             return JsonResponse({"message": "User updated successfully"}, status=200)
         except CustomUser.DoesNotExist:
             return JsonResponse({"error": "User not found"}, status=404)
@@ -109,31 +88,34 @@ def edit_user(request):
     return JsonResponse({"error": "Method Not Allowed"}, status=405)
 
 
-@csrf_exempt
-def logout_user(request):
-    if request.method == "POST":
-        logout(request)
-        request.session.flush()
-        return JsonResponse({"message": "Logout Successful"}, status=200)
-
-    return JsonResponse({"error": "Method Not Allowed"}, status=405)
-
-
 # @login_required
 @csrf_exempt
-def get_user_profile(request):
-    print(request.user)
-    if request.session:
-        email = request.session.get("email")
-        print(email)
-        user = CustomUser.objects.filter(email=email)
-        print(user)
-        data = {
-            "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "role": user.role,
-        }
-        return JsonResponse(data)
+def get_user_profile(request, user_id):
+    if request.method == "GET":
+        try:
+            user = CustomUser.objects.get(pk=user_id)
+            data = {
+                "id": user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "role": user.role,
+            }
+            return JsonResponse(data)
+        except CustomUser.DoesNotExist:
+            return JsonResponse({"error": "User not found"}, status=404)
     else:
-        return JsonResponse({"error": "User is not authenticated"}, status=401)
+        return JsonResponse({"error": "Method Not Allowed"}, status=405)
+
+
+@csrf_exempt
+def delete_account(request, user_id):
+    if request.method == "GET":
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            user.delete()
+            return JsonResponse({"message": "Account deleted successfully"}, status=200)
+        except CustomUser.DoesNotExist:
+            return JsonResponse({"error": "User not found"}, status=404)
+    else:
+        return JsonResponse({"error": "Method Not Allowed"}, status=405)

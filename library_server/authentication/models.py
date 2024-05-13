@@ -29,6 +29,8 @@ class CustomUser(AbstractBaseUser):
     # Add custom fields
     email = models.EmailField(unique=True, max_length=50)
     role = models.CharField(max_length=20)
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
 
     # username = models.CharField(max_length=70, unique=True)
     date_joined = models.DateTimeField(auto_now_add=True)
