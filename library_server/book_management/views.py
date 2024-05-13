@@ -294,24 +294,3 @@ def getBorrowed(request, user_id):
         return JsonResponse(borrowed_books_data, safe=False)
     else:
         return JsonResponse({"error": "Only GET requests are allowed"}, status=405)
-
-
-# from django.middleware.csrf import get_token
-# from django.http import JsonResponse
-
-# def signup(request):
-#     # Process signup request and save user data
-#     # Generate CSRF token for the user's session
-#     csrf_token = get_token(request)
-#     # Return JSON response with CSRF token
-#     return JsonResponse({'csrf_token': csrf_token})
-
-# # Return response with CSRF token set as a header
-#     response = HttpResponse()
-#     response['X-CSRFToken'] = csrf_token
-#     return response
-
-
-# else:
-#         # Handle GET requests
-#         return JsonResponse({'error': 'Only POST requests are allowed'}, status=405)
