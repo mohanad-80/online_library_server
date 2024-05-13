@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "authentication",
+    "book_management"
 ]
 
 MIDDLEWARE = [
@@ -127,9 +128,13 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_ALL_ORIGINS = True
 # CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:3000",
+    # Add other origins as needed
+]
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  
 
