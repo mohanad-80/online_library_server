@@ -2,7 +2,8 @@ import json
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Book
+from .models import Book, BorrowedBook
+from authentication.models import CustomUser
 
 
 @csrf_exempt
@@ -165,7 +166,7 @@ def search(request):
         else:
             books = Book.objects.all()
 
-        if genres:
+        if genres and "All" not in genres:
             # Filter books by genres if genres are provided
             for genre in genres:
                 books = books.filter(bookGenres__icontains=genre)
