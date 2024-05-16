@@ -1,9 +1,10 @@
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.hashers import make_password
 from authentication.models import CustomUser
 from django.views.decorators.csrf import csrf_exempt
 import json
+from .decorators import custom_login_required
 
 
 @csrf_exempt
@@ -19,6 +20,7 @@ def login_user(request):
             # Check if the password matches
             if user.check_password(password):
                 # If the password is correct, return a success response
+                login(request, user)
                 return JsonResponse({"user_id": user.id, "role": user.role}, status=200)
             else:
                 # If the password is incorrect, return an error response
@@ -58,6 +60,7 @@ def register_user(request):
 
 
 @csrf_exempt
+@custom_login_required
 def edit_user(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -70,7 +73,7 @@ def edit_user(request):
         new_password = data.get("newPassword")
 
         try:
-            user = CustomUser.objects.get(id=user_id)
+            user = CustomUser.objects.get(pk=user_id)
             if not user.check_password(current_password):
                 return JsonResponse({"error": "Incorrect password"}, status=400)
 
@@ -88,8 +91,8 @@ def edit_user(request):
     return JsonResponse({"error": "Method Not Allowed"}, status=405)
 
 
-# @login_required
 @csrf_exempt
+@custom_login_required
 def get_user_profile(request, user_id):
     if request.method == "GET":
         try:
@@ -112,10 +115,20 @@ def get_user_profile(request, user_id):
 def delete_account(request, user_id):
     if request.method == "GET":
         try:
-            user = CustomUser.objects.get(id=user_id)
+            user = CustomUser.objects.get(pk=user_id)
+            logout(request)
             user.delete()
             return JsonResponse({"message": "Account deleted successfully"}, status=200)
         except CustomUser.DoesNotExist:
             return JsonResponse({"error": "User not found"}, status=404)
     else:
         return JsonResponse({"error": "Method Not Allowed"}, status=405)
+
+
+@csrf_exempt
+@custom_login_required
+def logout_user(request):
+    if request.method == "POST":
+        logout(request)
+        return JsonResponse({"message": "Logged out successfully"}, status=200)    
+    return JsonResponse({"error": "Method Not Allowed"}, status=405)

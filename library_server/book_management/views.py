@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Book, BorrowedBook
 from authentication.models import CustomUser
+from authentication.decorators import admin_required, user_required, custom_login_required
 
 
 @csrf_exempt
@@ -32,6 +33,8 @@ def getAll(request):
 
 
 @csrf_exempt
+@custom_login_required
+@admin_required
 def add(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -95,6 +98,8 @@ def getOne(request, book_id):
 
 
 @csrf_exempt
+@custom_login_required
+@admin_required
 def edit(request, book_id):
     if request.method == "POST":
         # Parse the JSON data from the request body
@@ -130,6 +135,8 @@ def edit(request, book_id):
 
 
 @csrf_exempt
+@custom_login_required
+@admin_required
 def delete(request, book_id):
     if request.method == "POST":
         # Try to get the book object with the provided book_id
@@ -195,6 +202,8 @@ def search(request):
 
 
 @csrf_exempt
+@custom_login_required
+@admin_required
 def getAvailable(request):
     if request.method == "GET":
         available_books = Book.objects.filter(availability=True)
@@ -221,6 +230,8 @@ def getAvailable(request):
 
 
 @csrf_exempt
+@custom_login_required
+@user_required
 def borrow(request, book_id):
     if request.method == "POST":
         try:
@@ -257,6 +268,8 @@ def borrow(request, book_id):
 
 
 @csrf_exempt
+@custom_login_required
+@user_required
 def getBorrowed(request, user_id):
     if request.method == "GET":
         try:
