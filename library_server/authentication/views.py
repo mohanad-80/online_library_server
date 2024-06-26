@@ -60,7 +60,6 @@ def register_user(request):
 
 
 @csrf_exempt
-@custom_login_required
 def edit_user(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -92,7 +91,6 @@ def edit_user(request):
 
 
 @csrf_exempt
-@custom_login_required
 def get_user_profile(request, user_id):
     if request.method == "GET":
         try:
@@ -126,7 +124,6 @@ def delete_account(request, user_id):
 
 
 @csrf_exempt
-@custom_login_required
 def logout_user(request):
     if request.method == "POST":
         logout(request)
